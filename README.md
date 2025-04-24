@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # sgde_fronted
 
 A new Flutter project.
@@ -14,3 +15,6 @@ A few resources to get you started if this is your first Flutter project:
 For help getting started with Flutter development, view the
 [online documentation](https://docs.flutter.dev/), which offers tutorials,
 samples, guidance on mobile development, and a full API reference.
+=======
+# sdge_frontend
+>>>>>>> 8b018596a20275ab2aa81b3023c71a443af1e681
