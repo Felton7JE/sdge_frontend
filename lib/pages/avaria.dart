@@ -1,24 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
-class AdicionarEquipamentoScreen extends StatefulWidget {
-  const AdicionarEquipamentoScreen({Key? key}) : super(key: key);
+class AvariaScreen extends StatefulWidget {
+  const AvariaScreen({Key? key}) : super(key: key);
 
   @override
-  State<AdicionarEquipamentoScreen> createState() =>
-      _AdicionarEquipamentoScreenState();
+  State<AvariaScreen> createState() => _AvariaScreenState();
 }
 
-class _AdicionarEquipamentoScreenState extends State<AdicionarEquipamentoScreen> {
+class _AvariaScreenState extends State<AvariaScreen> {
   final _formKey = GlobalKey<FormState>();
-  String? _nome;
-  String? _tipo;
-  String? _modelo;
-  String? _numeroSerie;
-  DateTime? _dataAquisicao;
-  String? _localizacao;
-  String? _observacoes;
-  List<Equipamento> _equipamentos = [];
+  String? _equipamento;
+  String? _descricao;
+  DateTime? _dataAvaria;
+  String? _status; // "Pendente", "Em Andamento", "Concluída"
+  String? _responsavel;
+  List<Avaria> _avarias = [];
 
   @override
   Widget build(BuildContext context) {
@@ -56,7 +53,7 @@ class _AdicionarEquipamentoScreenState extends State<AdicionarEquipamentoScreen>
                         icon: Icon(Icons.local_shipping),
                         label: Text("Empréstimos")),
                   ],
-                  selectedIndex: 1, // Mantém "Equipamentos" selecionado
+                  selectedIndex: 3, // Mantém "Avarias" selecionado
                   onDestinationSelected: (index) {
                     // Implemente a lógica de navegação aqui.  Use pushReplacementNamed para evitar acumular telas na pilha
                     switch (index) {
@@ -64,6 +61,9 @@ class _AdicionarEquipamentoScreenState extends State<AdicionarEquipamentoScreen>
                         Navigator.pushReplacementNamed(context, '/dashboard');
                         break;
                       case 1:
+                        Navigator.pushReplacementNamed(context, '/equipamentos');
+                        break;
+                      case 3:
                         // Não faz nada, permanece nesta tela
                         break;
                       //implemente a lógica dos outros caso necessite
@@ -92,35 +92,29 @@ class _AdicionarEquipamentoScreenState extends State<AdicionarEquipamentoScreen>
                         alignment: WrapAlignment.center, // Centraliza os cards horizontalmente
                         children: [
                           _buildSummaryCard(
-                            icon: Icons.computer,
-                            title: "Equipamentos Totais",
-                            value: "150",
+                            icon: Icons.warning,
+                            title: "Avarias Pendentes",
+                            value: "5",
+                            color: Colors.orange,
+                          ),
+                          _buildSummaryCard(
+                            icon: Icons.build,
+                            title: "Avarias Em Andamento",
+                            value: "3",
                             color: Colors.blue,
                           ),
                           _buildSummaryCard(
                             icon: Icons.check_circle,
-                            title: "Equipamentos Operacionais",
-                            value: "120",
+                            title: "Avarias Concluídas",
+                            value: "12",
                             color: Colors.green,
-                          ),
-                          _buildSummaryCard(
-                            icon: Icons.warning,
-                            title: "Equipamentos em Manutenção",
-                            value: "10",
-                            color: Colors.orange,
-                          ),
-                          _buildSummaryCard(
-                            icon: Icons.error,
-                            title: "Equipamentos Avariados",
-                            value: "20",
-                            color: Colors.red,
                           ),
                         ],
                       ),
                       const SizedBox(
                           height:
                               30.0), // Consistência no espaçamento
-                      _buildEquipamentosTable(),
+                      _buildAvariasTable(),
                       const SizedBox(
                           height:
                               30.0), // Consistência no espaçamento
@@ -136,10 +130,10 @@ class _AdicionarEquipamentoScreenState extends State<AdicionarEquipamentoScreen>
                             ),
                           ),
                           onPressed: () {
-                            _showAddEquipmentDialog(context);
+                            _showAddAvariaDialog(context);
                           },
                           child: const Text(
-                            "Adicionar Equipamento",
+                            "Reportar Avaria",
                             style: TextStyle(color: Colors.white),
                           ),
                         ),
@@ -172,7 +166,7 @@ class _AdicionarEquipamentoScreenState extends State<AdicionarEquipamentoScreen>
               BottomNavigationBarItem(
                   icon: Icon(Icons.local_shipping), label: "Empréstimos"),
             ],
-            currentIndex: 1,
+            currentIndex: 3,
             selectedItemColor: Colors.blue,
             unselectedItemColor: Colors.grey,
             onTap: (index) {
@@ -182,11 +176,11 @@ class _AdicionarEquipamentoScreenState extends State<AdicionarEquipamentoScreen>
                   break;
                 case 1:
                   Navigator.pushReplacementNamed(context, '/equipamentos');
-                  break; 
-                case 2:
-                  Navigator.pushReplacementNamed(context, '/alocacao');
                   break;
-                  //  Navigator.pushReplacementNamed(context, '/outra_rota'); // Rota padrão se necessário
+                case 3:
+                  Navigator.pushReplacementNamed(context, '/avarias');
+                  break;
+                //  Navigator.pushReplacementNamed(context, '/outra_rota'); // Rota padrão se necessário
               }
             },
           );
@@ -196,7 +190,7 @@ class _AdicionarEquipamentoScreenState extends State<AdicionarEquipamentoScreen>
     );
   }
 
-  Widget _buildEquipamentosTable() {
+  Widget _buildAvariasTable() {
     return Card(
       elevation: 4,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -206,7 +200,7 @@ class _AdicionarEquipamentoScreenState extends State<AdicionarEquipamentoScreen>
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              "Lista de Equipamentos",
+              "Lista de Avarias",
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.w600,
@@ -240,17 +234,17 @@ class _AdicionarEquipamentoScreenState extends State<AdicionarEquipamentoScreen>
                   columnSpacing: 16,
                   horizontalMargin: 0,
                   columns: const [
-                    DataColumn(label: Text("Nome")),
-                    DataColumn(label: Text("Tipo")),
-                    DataColumn(label: Text("Modelo")),
-                    DataColumn(label: Text("Número de Série")),
+                    DataColumn(label: Text("Equipamento")),
+                    DataColumn(label: Text("Descrição")),
+                    DataColumn(label: Text("Data")),
+                    DataColumn(label: Text("Status")),
                   ],
-                  rows: _equipamentos.map((equipamento) {
+                  rows: _avarias.map((avaria) {
                     return DataRow(cells: [
-                      DataCell(Text(equipamento.nome ?? '')),
-                      DataCell(Text(equipamento.tipo ?? '')),
-                      DataCell(Text(equipamento.modelo ?? '')),
-                      DataCell(Text(equipamento.numeroSerie ?? '')),
+                      DataCell(Text(avaria.equipamento ?? '')),
+                      DataCell(Text(avaria.descricao ?? '')),
+                      DataCell(Text(avaria.dataAvaria != null ? DateFormat('dd/MM/yyyy').format(avaria.dataAvaria!) : '')),
+                      DataCell(Text(avaria.status ?? '')),
                     ]);
                   }).toList(),
                 ),
@@ -262,7 +256,7 @@ class _AdicionarEquipamentoScreenState extends State<AdicionarEquipamentoScreen>
     );
   }
 
-  void _showAddEquipmentDialog(BuildContext context) {
+  void _showAddAvariaDialog(BuildContext context) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -285,7 +279,7 @@ class _AdicionarEquipamentoScreenState extends State<AdicionarEquipamentoScreen>
                 child: Padding(
                   padding: const EdgeInsets.all(16.0),
                   child: Text(
-                    "Adicionar Equipamento",
+                    "Reportar Avaria",
                     style: TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.bold,
@@ -308,11 +302,11 @@ class _AdicionarEquipamentoScreenState extends State<AdicionarEquipamentoScreen>
                     width: MediaQuery.of(context).size.width * 0.30, // Ajuste a largura para ocupar metade do espaço disponível
                     child: _buildFormField(
                       context: context,
-                      labelText: "Nome do Equipamento",
-                      onSaved: (value) => _nome = value,
+                      labelText: "Equipamento",
+                      onSaved: (value) => _equipamento = value,
                       validator: (value) {
                         if (value == null || value.isEmpty) {
-                          return "Por favor, insira o nome do equipamento.";
+                          return "Por favor, insira o equipamento.";
                         }
                         return null;
                       },
@@ -322,11 +316,12 @@ class _AdicionarEquipamentoScreenState extends State<AdicionarEquipamentoScreen>
                     width: MediaQuery.of(context).size.width * 0.30, // Ajuste a largura para ocupar metade do espaço disponível
                     child: _buildFormField(
                       context: context,
-                      labelText: "Tipo de Equipamento",
-                      onSaved: (value) => _tipo = value,
+                      labelText: "Descrição da Avaria",
+                      maxLines: 3,
+                      onSaved: (value) => _descricao = value,
                       validator: (value) {
                         if (value == null || value.isEmpty) {
-                          return "Por favor, insira o tipo de equipamento.";
+                          return "Por favor, insira a descrição da avaria.";
                         }
                         return null;
                       },
@@ -336,44 +331,69 @@ class _AdicionarEquipamentoScreenState extends State<AdicionarEquipamentoScreen>
                     width: MediaQuery.of(context).size.width * 0.30, // Ajuste a largura para ocupar metade do espaço disponível
                     child: _buildFormField(
                       context: context,
-                      labelText: "Modelo",
-                      onSaved: (value) => _modelo = value,
-                    ),
-                  ),
-                  SizedBox(
-                    width: MediaQuery.of(context).size.width * 0.30, // Ajuste a largura para ocupar metade do espaço disponível
-                    child: _buildFormField(
-                      context: context,
-                      labelText: "Número de Série",
-                      onSaved: (value) => _numeroSerie = value,
-                    ),
-                  ),
-                  SizedBox(
-                    width: MediaQuery.of(context).size.width * 0.30, // Ajuste a largura para ocupar metade do espaço disponível
-                    child: _buildFormField(
-                      context: context,
-                      labelText: "Data de Aquisição",
+                      labelText: "Data da Avaria",
                       isDate: true,
                       dateOnSaved: (DateTime? value) {
-                        _dataAquisicao = value;
+                        _dataAvaria = value;
                       },
                     ),
                   ),
                   SizedBox(
                     width: MediaQuery.of(context).size.width * 0.30, // Ajuste a largura para ocupar metade do espaço disponível
-                    child: _buildFormField(
-                      context: context,
-                      labelText: "Localização",
-                      onSaved: (value) => _localizacao = value,
+                    child: DropdownButtonFormField<String>(
+                      decoration: InputDecoration(
+                        labelText: "Status",
+                        border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(
+                                8)), // Borda arredondada
+                        filled: true,
+                        fillColor: Colors.white,
+                        contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 12), // Padding interno
+                        labelStyle: TextStyle(color: Colors.grey[600]), // Cor do label
+                        focusedBorder: OutlineInputBorder(
+                          // Estilo da borda quando o campo está focado
+                          borderSide:
+                          const BorderSide(color: Color(0xFF3F51B5), width: 2),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        errorBorder: OutlineInputBorder(
+                          // Estilo da borda em caso de erro
+                          borderSide: const BorderSide(color: Colors.red, width: 2),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        focusedErrorBorder: OutlineInputBorder(
+                          // Estilo da borda quando o campo está focado e tem erro
+                          borderSide: const BorderSide(color: Colors.red, width: 2),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      value: _status,
+                      items: const [
+                        DropdownMenuItem(value: "Pendente", child: Text("Pendente")),
+                        DropdownMenuItem(value: "Em Andamento", child: Text("Em Andamento")),
+                        DropdownMenuItem(value: "Concluída", child: Text("Concluída")),
+                      ],
+                      onChanged: (value) {
+                        setState(() {
+                          _status = value;
+                        });
+                      },
+                      onSaved: (value) => _status = value,
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return "Por favor, selecione o status.";
+                        }
+                        return null;
+                      },
                     ),
                   ),
-                  SizedBox(
+                   SizedBox(
                     width: MediaQuery.of(context).size.width * 0.30, // Ajuste a largura para ocupar metade do espaço disponível
                     child: _buildFormField(
                       context: context,
-                      labelText: "Observações",
-                      maxLines: 3,
-                      onSaved: (value) => _observacoes = value,
+                      labelText: "Responsável",
+                      onSaved: (value) => _responsavel = value,
                     ),
                   ),
                 ],
@@ -413,25 +433,23 @@ class _AdicionarEquipamentoScreenState extends State<AdicionarEquipamentoScreen>
                     if (_formKey.currentState!.validate()) {
                       _formKey.currentState!.save();
 
-                      Equipamento novoEquipamento = Equipamento(
-                        nome: _nome,
-                        tipo: _tipo,
-                        modelo: _modelo,
-                        numeroSerie: _numeroSerie,
-                        dataAquisicao: _dataAquisicao,
-                        localizacao: _localizacao,
-                        observacoes: _observacoes,
+                      Avaria novaAvaria = Avaria(
+                        equipamento: _equipamento,
+                        descricao: _descricao,
+                        dataAvaria: _dataAvaria,
+                        status: _status,
+                        responsavel: _responsavel,
                       );
 
                       setState(() {
-                        _equipamentos.add(novoEquipamento);
+                        _avarias.add(novaAvaria);
                       });
                       Navigator.of(context).pop();
                       _formKey.currentState!.reset();
 
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
-                          content: Text("Equipamento adicionado com sucesso!"),
+                          content: Text("Avaria reportada com sucesso!"),
                           backgroundColor: Colors.green,
                         ),
                       );
@@ -525,7 +543,7 @@ class _AdicionarEquipamentoScreenState extends State<AdicionarEquipamentoScreen>
 
           if (pickedDate != null) {
             setState(() {
-              _dataAquisicao = pickedDate;
+              _dataAvaria = pickedDate;
             });
             onSaved?.call(
                 pickedDate); // Chama o onSaved com a data selecionada.
@@ -547,8 +565,8 @@ class _AdicionarEquipamentoScreenState extends State<AdicionarEquipamentoScreen>
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                _dataAquisicao != null
-                    ? DateFormat('dd/MM/yyyy').format(_dataAquisicao!)
+                _dataAvaria != null
+                    ? DateFormat('dd/MM/yyyy').format(_dataAvaria!)
                     : "Selecione a data",
                 style: const TextStyle(fontSize: 16), // Tamanho da fonte
               ),
@@ -616,7 +634,7 @@ class _AdicionarEquipamentoScreenState extends State<AdicionarEquipamentoScreen>
       children: [
         const SizedBox(width: 48),
         Text(
-          "Visão Geral do Sistema CETIC",
+          "Gerenciamento de Avarias",
           style: TextStyle(
               fontSize: 28, fontWeight: FontWeight.w600, color: Colors.grey[800]),
         ),
@@ -640,22 +658,19 @@ class _AdicionarEquipamentoScreenState extends State<AdicionarEquipamentoScreen>
   }
 }
 
-class Equipamento {
-  String? nome;
-  String? tipo;
-  String? modelo;
-  String? numeroSerie;
-  DateTime? dataAquisicao;
-  String? localizacao;
-  String? observacoes;
+class Avaria {
+  String? equipamento;
+  String? descricao;
+  DateTime? dataAvaria;
+  String? status;
+  String? responsavel;
 
-  Equipamento({
-    this.nome,
-    this.tipo,
-    this.modelo,
-    this.numeroSerie,
-    this.dataAquisicao,
-    this.localizacao,
-    this.observacoes,
+
+  Avaria({
+    this.equipamento,
+    this.descricao,
+    this.dataAvaria,
+    this.status,
+    this.responsavel,
   });
 }

@@ -1,24 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
-class AdicionarEquipamentoScreen extends StatefulWidget {
-  const AdicionarEquipamentoScreen({Key? key}) : super(key: key);
+class ManutencaoEquipamentoScreen extends StatefulWidget {
+  const ManutencaoEquipamentoScreen({Key? key}) : super(key: key);
 
   @override
-  State<AdicionarEquipamentoScreen> createState() =>
-      _AdicionarEquipamentoScreenState();
+  State<ManutencaoEquipamentoScreen> createState() =>
+      _ManutencaoEquipamentoScreenState();
 }
 
-class _AdicionarEquipamentoScreenState extends State<AdicionarEquipamentoScreen> {
+class _ManutencaoEquipamentoScreenState
+    extends State<ManutencaoEquipamentoScreen> {
   final _formKey = GlobalKey<FormState>();
   String? _nome;
   String? _tipo;
-  String? _modelo;
-  String? _numeroSerie;
-  DateTime? _dataAquisicao;
-  String? _localizacao;
-  String? _observacoes;
-  List<Equipamento> _equipamentos = [];
+  String? _descricao;
+  DateTime? _dataInicio;
+  DateTime? _dataFim;
+  String? _status;
+  List<Manutencao> _manutencoes = [];
 
   @override
   Widget build(BuildContext context) {
@@ -29,7 +29,6 @@ class _AdicionarEquipamentoScreenState extends State<AdicionarEquipamentoScreen>
           final isWideScreen = constraints.maxWidth > 800;
           return Row(
             children: [
-              // NavigationRail (Menu Lateral)
               if (isWideScreen)
                 NavigationRail(
                   backgroundColor: const Color(0xFF3F51B5),
@@ -56,14 +55,18 @@ class _AdicionarEquipamentoScreenState extends State<AdicionarEquipamentoScreen>
                         icon: Icon(Icons.local_shipping),
                         label: Text("Empréstimos")),
                   ],
-                  selectedIndex: 1, // Mantém "Equipamentos" selecionado
+                  selectedIndex: 2, // Mantém "Manutenção" selecionado
                   onDestinationSelected: (index) {
-                    // Implemente a lógica de navegação aqui.  Use pushReplacementNamed para evitar acumular telas na pilha
+                    // Implemente a lógica de navegação aqui. Use pushReplacementNamed para evitar acumular telas na pilha
                     switch (index) {
                       case 0:
                         Navigator.pushReplacementNamed(context, '/dashboard');
                         break;
                       case 1:
+                        Navigator.pushReplacementNamed(
+                            context, '/equipamentos');
+                        break;
+                      case 2:
                         // Não faz nada, permanece nesta tela
                         break;
                       //implemente a lógica dos outros caso necessite
@@ -89,38 +92,38 @@ class _AdicionarEquipamentoScreenState extends State<AdicionarEquipamentoScreen>
                       Wrap(
                         spacing: 20,
                         runSpacing: 20,
-                        alignment: WrapAlignment.center, // Centraliza os cards horizontalmente
+                        alignment: WrapAlignment.center,
                         children: [
                           _buildSummaryCard(
-                            icon: Icons.computer,
-                            title: "Equipamentos Totais",
-                            value: "150",
+                            icon: Icons.build,
+                            title: "Manutenções Totais",
+                            value: _manutencoes.length.toString(),
                             color: Colors.blue,
                           ),
                           _buildSummaryCard(
                             icon: Icons.check_circle,
-                            title: "Equipamentos Operacionais",
-                            value: "120",
+                            title: "Concluídas",
+                            value: _manutencoes
+                                .where((m) => m.status == "Concluído")
+                                .length
+                                .toString(),
                             color: Colors.green,
                           ),
                           _buildSummaryCard(
                             icon: Icons.warning,
-                            title: "Equipamentos em Manutenção",
-                            value: "10",
+                            title: "Pendentes",
+                            value: _manutencoes
+                                .where((m) => m.status == "Pendente")
+                                .length
+                                .toString(),
                             color: Colors.orange,
-                          ),
-                          _buildSummaryCard(
-                            icon: Icons.error,
-                            title: "Equipamentos Avariados",
-                            value: "20",
-                            color: Colors.red,
                           ),
                         ],
                       ),
                       const SizedBox(
                           height:
                               30.0), // Consistência no espaçamento
-                      _buildEquipamentosTable(),
+                      _buildManutencoesTable(),
                       const SizedBox(
                           height:
                               30.0), // Consistência no espaçamento
@@ -136,10 +139,10 @@ class _AdicionarEquipamentoScreenState extends State<AdicionarEquipamentoScreen>
                             ),
                           ),
                           onPressed: () {
-                            _showAddEquipmentDialog(context);
+                            _showAddManutencaoDialog(context);
                           },
                           child: const Text(
-                            "Adicionar Equipamento",
+                            "Adicionar Manutenção",
                             style: TextStyle(color: Colors.white),
                           ),
                         ),
@@ -172,7 +175,7 @@ class _AdicionarEquipamentoScreenState extends State<AdicionarEquipamentoScreen>
               BottomNavigationBarItem(
                   icon: Icon(Icons.local_shipping), label: "Empréstimos"),
             ],
-            currentIndex: 1,
+            currentIndex: 2, // Marcar "Manutenção" como selecionado
             selectedItemColor: Colors.blue,
             unselectedItemColor: Colors.grey,
             onTap: (index) {
@@ -182,11 +185,21 @@ class _AdicionarEquipamentoScreenState extends State<AdicionarEquipamentoScreen>
                   break;
                 case 1:
                   Navigator.pushReplacementNamed(context, '/equipamentos');
-                  break; 
-                case 2:
-                  Navigator.pushReplacementNamed(context, '/alocacao');
                   break;
-                  //  Navigator.pushReplacementNamed(context, '/outra_rota'); // Rota padrão se necessário
+                case 2:
+                   Navigator.pushReplacementNamed(context, '/manutencao');
+                  break;
+                case 3:
+                  Navigator.pushReplacementNamed(context, '/avarias');
+                  break;
+                case 4:
+                  Navigator.pushReplacementNamed(context, '/requisicoes');
+                  break;
+                case 5:
+                  Navigator.pushReplacementNamed(context, '/emprestimos');
+                  break;
+                default:
+                  break;
               }
             },
           );
@@ -196,7 +209,7 @@ class _AdicionarEquipamentoScreenState extends State<AdicionarEquipamentoScreen>
     );
   }
 
-  Widget _buildEquipamentosTable() {
+  Widget _buildManutencoesTable() {
     return Card(
       elevation: 4,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -206,7 +219,7 @@ class _AdicionarEquipamentoScreenState extends State<AdicionarEquipamentoScreen>
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              "Lista de Equipamentos",
+              "Lista de Manutenções",
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.w600,
@@ -217,12 +230,10 @@ class _AdicionarEquipamentoScreenState extends State<AdicionarEquipamentoScreen>
             SizedBox(
               width: double.infinity,
               child: Theme(
-                // Adiciona um tema para customizar o DataTable
                 data: ThemeData.light().copyWith(
                   cardColor: Colors.white,
                   textTheme: const TextTheme(
-                    bodyMedium:
-                        TextStyle(color: Colors.black), // Cor dos textos
+                    bodyMedium: TextStyle(color: Colors.black),
                   ),
                   dataTableTheme: DataTableThemeData(
                     decoration: BoxDecoration(
@@ -242,15 +253,24 @@ class _AdicionarEquipamentoScreenState extends State<AdicionarEquipamentoScreen>
                   columns: const [
                     DataColumn(label: Text("Nome")),
                     DataColumn(label: Text("Tipo")),
-                    DataColumn(label: Text("Modelo")),
-                    DataColumn(label: Text("Número de Série")),
+                    DataColumn(label: Text("Descrição")),
+                    DataColumn(label: Text("Data Início")),
+                    DataColumn(label: Text("Data Fim")),
+                    DataColumn(label: Text("Status")),
                   ],
-                  rows: _equipamentos.map((equipamento) {
+                  rows: _manutencoes.map((manutencao) {
                     return DataRow(cells: [
-                      DataCell(Text(equipamento.nome ?? '')),
-                      DataCell(Text(equipamento.tipo ?? '')),
-                      DataCell(Text(equipamento.modelo ?? '')),
-                      DataCell(Text(equipamento.numeroSerie ?? '')),
+                      DataCell(Text(manutencao.nome ?? '')),
+                      DataCell(Text(manutencao.tipo ?? '')),
+                      DataCell(Text(manutencao.descricao ?? '')),
+                      DataCell(Text(manutencao.dataInicio != null
+                          ? DateFormat('dd/MM/yyyy')
+                              .format(manutencao.dataInicio!)
+                          : '')),
+                      DataCell(Text(manutencao.dataFim != null
+                          ? DateFormat('dd/MM/yyyy').format(manutencao.dataFim!)
+                          : '')),
+                      DataCell(Text(manutencao.status ?? '')),
                     ]);
                   }).toList(),
                 ),
@@ -262,13 +282,13 @@ class _AdicionarEquipamentoScreenState extends State<AdicionarEquipamentoScreen>
     );
   }
 
-  void _showAddEquipmentDialog(BuildContext context) {
+  void _showAddManutencaoDialog(BuildContext context) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
           insetPadding: EdgeInsets.symmetric(
-            horizontal: MediaQuery.of(context).size.width * 0.15, // Aumentei para 15% em cada lado
+            horizontal: MediaQuery.of(context).size.width * 0.15,
             vertical: 20,
           ),
           clipBehavior: Clip.antiAlias,
@@ -285,7 +305,7 @@ class _AdicionarEquipamentoScreenState extends State<AdicionarEquipamentoScreen>
                 child: Padding(
                   padding: const EdgeInsets.all(16.0),
                   child: Text(
-                    "Adicionar Equipamento",
+                    "Adicionar Manutenção",
                     style: TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.bold,
@@ -299,13 +319,13 @@ class _AdicionarEquipamentoScreenState extends State<AdicionarEquipamentoScreen>
           content: SingleChildScrollView(
             child: Form(
               key: _formKey,
-              child: Wrap( // Alterado para Wrap
-                spacing: 16.0, // Espaçamento horizontal entre os campos
-                runSpacing: 16.0, // Espaçamento vertical entre as linhas
-                alignment: WrapAlignment.center, // Centraliza os campos no Wrap
+              child: Wrap(
+                spacing: 16.0,
+                runSpacing: 16.0,
+                alignment: WrapAlignment.center,
                 children: [
                   SizedBox(
-                    width: MediaQuery.of(context).size.width * 0.30, // Ajuste a largura para ocupar metade do espaço disponível
+                    width: MediaQuery.of(context).size.width * 0.30,
                     child: _buildFormField(
                       context: context,
                       labelText: "Nome do Equipamento",
@@ -319,7 +339,7 @@ class _AdicionarEquipamentoScreenState extends State<AdicionarEquipamentoScreen>
                     ),
                   ),
                   SizedBox(
-                    width: MediaQuery.of(context).size.width * 0.30, // Ajuste a largura para ocupar metade do espaço disponível
+                    width: MediaQuery.of(context).size.width * 0.30,
                     child: _buildFormField(
                       context: context,
                       labelText: "Tipo de Equipamento",
@@ -333,47 +353,44 @@ class _AdicionarEquipamentoScreenState extends State<AdicionarEquipamentoScreen>
                     ),
                   ),
                   SizedBox(
-                    width: MediaQuery.of(context).size.width * 0.30, // Ajuste a largura para ocupar metade do espaço disponível
+                    width: MediaQuery.of(context).size.width * 0.30,
                     child: _buildFormField(
                       context: context,
-                      labelText: "Modelo",
-                      onSaved: (value) => _modelo = value,
+                      labelText: "Descrição",
+                      maxLines: 3,
+                      onSaved: (value) => _descricao = value,
                     ),
                   ),
                   SizedBox(
-                    width: MediaQuery.of(context).size.width * 0.30, // Ajuste a largura para ocupar metade do espaço disponível
+                    width: MediaQuery.of(context).size.width * 0.30,
                     child: _buildFormField(
                       context: context,
-                      labelText: "Número de Série",
-                      onSaved: (value) => _numeroSerie = value,
-                    ),
-                  ),
-                  SizedBox(
-                    width: MediaQuery.of(context).size.width * 0.30, // Ajuste a largura para ocupar metade do espaço disponível
-                    child: _buildFormField(
-                      context: context,
-                      labelText: "Data de Aquisição",
+                      labelText: "Data Início",
                       isDate: true,
                       dateOnSaved: (DateTime? value) {
-                        _dataAquisicao = value;
+                        _dataInicio = value;
                       },
+                      selectedDate: _dataInicio,
                     ),
                   ),
                   SizedBox(
-                    width: MediaQuery.of(context).size.width * 0.30, // Ajuste a largura para ocupar metade do espaço disponível
+                    width: MediaQuery.of(context).size.width * 0.30,
                     child: _buildFormField(
                       context: context,
-                      labelText: "Localização",
-                      onSaved: (value) => _localizacao = value,
+                      labelText: "Data Fim",
+                      isDate: true,
+                      dateOnSaved: (DateTime? value) {
+                        _dataFim = value;
+                      },
+                      selectedDate: _dataFim,
                     ),
                   ),
                   SizedBox(
-                    width: MediaQuery.of(context).size.width * 0.30, // Ajuste a largura para ocupar metade do espaço disponível
+                    width: MediaQuery.of(context).size.width * 0.30,
                     child: _buildFormField(
                       context: context,
-                      labelText: "Observações",
-                      maxLines: 3,
-                      onSaved: (value) => _observacoes = value,
+                      labelText: "Status",
+                      onSaved: (value) => _status = value,
                     ),
                   ),
                 ],
@@ -400,38 +417,43 @@ class _AdicionarEquipamentoScreenState extends State<AdicionarEquipamentoScreen>
                       color: Colors.white,
                       fontWeight: FontWeight.bold,
                     ),
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 24, vertical: 12),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
                   ),
                   child: const Text(
                     "Salvar",
-                    style: TextStyle(color: Colors.white), // Adicionado para garantir que o texto seja branco
+                    style: TextStyle(color: Colors.white),
                   ),
                   onPressed: () {
                     if (_formKey.currentState!.validate()) {
                       _formKey.currentState!.save();
 
-                      Equipamento novoEquipamento = Equipamento(
+                      Manutencao novaManutencao = Manutencao(
                         nome: _nome,
                         tipo: _tipo,
-                        modelo: _modelo,
-                        numeroSerie: _numeroSerie,
-                        dataAquisicao: _dataAquisicao,
-                        localizacao: _localizacao,
-                        observacoes: _observacoes,
+                        descricao: _descricao,
+                        dataInicio: _dataInicio,
+                        dataFim: _dataFim,
+                        status: _status,
                       );
 
                       setState(() {
-                        _equipamentos.add(novoEquipamento);
+                        _manutencoes.add(novaManutencao);
                       });
                       Navigator.of(context).pop();
                       _formKey.currentState!.reset();
+                      setState(() {
+                        _dataInicio = null;
+                        _dataFim = null;
+                      });
+
 
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
-                          content: Text("Equipamento adicionado com sucesso!"),
+                          content: Text("Manutenção adicionada com sucesso!"),
                           backgroundColor: Colors.green,
                         ),
                       );
@@ -454,35 +476,36 @@ class _AdicionarEquipamentoScreenState extends State<AdicionarEquipamentoScreen>
     FormFieldValidator<String>? validator,
     bool isDate = false,
     FormFieldSetter<DateTime?>? dateOnSaved,
+    DateTime? selectedDate,
   }) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: isDate
-          ? _buildDateField(labelText: labelText, onSaved: dateOnSaved)
+          ? _buildDateField(
+              labelText: labelText,
+              onSaved: dateOnSaved,
+              selectedDate: selectedDate,
+            )
           : TextFormField(
               decoration: InputDecoration(
                 labelText: labelText,
                 border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(
-                        8)), // Borda arredondada
+                    borderRadius: BorderRadius.circular(8)),
                 filled: true,
                 fillColor: Colors.white,
                 contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 16, vertical: 12), // Padding interno
-                labelStyle: TextStyle(color: Colors.grey[600]), // Cor do label
+                    horizontal: 16, vertical: 12),
+                labelStyle: TextStyle(color: Colors.grey[600]),
                 focusedBorder: OutlineInputBorder(
-                  // Estilo da borda quando o campo está focado
                   borderSide:
                       const BorderSide(color: Color(0xFF3F51B5), width: 2),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 errorBorder: OutlineInputBorder(
-                  // Estilo da borda em caso de erro
                   borderSide: const BorderSide(color: Colors.red, width: 2),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 focusedErrorBorder: OutlineInputBorder(
-                  // Estilo da borda quando o campo está focado e tem erro
                   borderSide: const BorderSide(color: Colors.red, width: 2),
                   borderRadius: BorderRadius.circular(8),
                 ),
@@ -490,7 +513,7 @@ class _AdicionarEquipamentoScreenState extends State<AdicionarEquipamentoScreen>
               maxLines: maxLines ?? 1,
               onSaved: onSaved,
               validator: validator,
-              style: const TextStyle(fontSize: 16), // Tamanho da fonte
+              style: const TextStyle(fontSize: 16),
             ),
     );
   }
@@ -498,6 +521,7 @@ class _AdicionarEquipamentoScreenState extends State<AdicionarEquipamentoScreen>
   Widget _buildDateField({
     required String labelText,
     FormFieldSetter<DateTime?>? onSaved,
+    DateTime? selectedDate,
   }) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
@@ -505,11 +529,10 @@ class _AdicionarEquipamentoScreenState extends State<AdicionarEquipamentoScreen>
         onTap: () async {
           DateTime? pickedDate = await showDatePicker(
             context: context,
-            initialDate: DateTime.now(),
+            initialDate: selectedDate ?? DateTime.now(),
             firstDate: DateTime(2000),
             lastDate: DateTime(2100),
             builder: (BuildContext context, Widget? child) {
-              // Customiza o DatePicker
               return Theme(
                 data: ThemeData.light().copyWith(
                   primaryColor: const Color(0xFF3F51B5),
@@ -525,35 +548,36 @@ class _AdicionarEquipamentoScreenState extends State<AdicionarEquipamentoScreen>
 
           if (pickedDate != null) {
             setState(() {
-              _dataAquisicao = pickedDate;
+              if (labelText == "Data Início") {
+                _dataInicio = pickedDate;
+              } else if (labelText == "Data Fim") {
+                _dataFim = pickedDate;
+              }
             });
-            onSaved?.call(
-                pickedDate); // Chama o onSaved com a data selecionada.
+            onSaved?.call(pickedDate);
           }
         },
         child: InputDecorator(
           decoration: InputDecoration(
             labelText: labelText,
             border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(
-                    8)), // Borda arredondada
+                borderRadius: BorderRadius.circular(8)),
             filled: true,
             fillColor: Colors.white,
             contentPadding: const EdgeInsets.symmetric(
-                horizontal: 16, vertical: 12), // Padding interno
-            labelStyle: TextStyle(color: Colors.grey[600]), // Cor do label
+                horizontal: 16, vertical: 12),
+            labelStyle: TextStyle(color: Colors.grey[600]),
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                _dataAquisicao != null
-                    ? DateFormat('dd/MM/yyyy').format(_dataAquisicao!)
+                selectedDate != null
+                    ? DateFormat('dd/MM/yyyy').format(selectedDate)
                     : "Selecione a data",
-                style: const TextStyle(fontSize: 16), // Tamanho da fonte
+                style: const TextStyle(fontSize: 16),
               ),
-              Icon(Icons.calendar_today,
-                  color: Colors.grey[600]), // Cor do ícone
+              Icon(Icons.calendar_today, color: Colors.grey[600]),
             ],
           ),
         ),
@@ -616,7 +640,7 @@ class _AdicionarEquipamentoScreenState extends State<AdicionarEquipamentoScreen>
       children: [
         const SizedBox(width: 48),
         Text(
-          "Visão Geral do Sistema CETIC",
+          "Manutenção de Equipamentos",
           style: TextStyle(
               fontSize: 28, fontWeight: FontWeight.w600, color: Colors.grey[800]),
         ),
@@ -640,22 +664,20 @@ class _AdicionarEquipamentoScreenState extends State<AdicionarEquipamentoScreen>
   }
 }
 
-class Equipamento {
+class Manutencao {
   String? nome;
   String? tipo;
-  String? modelo;
-  String? numeroSerie;
-  DateTime? dataAquisicao;
-  String? localizacao;
-  String? observacoes;
+  String? descricao;
+  DateTime? dataInicio;
+  DateTime? dataFim;
+  String? status;
 
-  Equipamento({
+  Manutencao({
     this.nome,
     this.tipo,
-    this.modelo,
-    this.numeroSerie,
-    this.dataAquisicao,
-    this.localizacao,
-    this.observacoes,
+    this.descricao,
+    this.dataInicio,
+    this.dataFim,
+    this.status,
   });
 }

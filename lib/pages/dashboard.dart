@@ -58,7 +58,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   final List<String> routes = [
     '/dashboard',
     '/equipamentos',
-    '/manutencao',
+    '/alocacao',
     '/avarias',
     '/requisicoes',
     '/emprestimos',
